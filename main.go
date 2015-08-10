@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/a8m/mark"
 	"io"
 	"os"
 )
 
 var (
 	input     = flag.String("i", "", "")
-	output    = flag.String("u", "", "")
+	output    = flag.String("o", "", "")
 	smarty    = flag.Bool("smartypants", false, "")
 	fractions = flag.Bool("fractions", false, "")
 )
@@ -32,17 +33,21 @@ func main() {
 		fmt.Fprint(os.Stderr, fmt.Sprintf(usage))
 	}
 	flag.Parse()
-	// Read input
+	// Reader
 	var reader *bufio.Reader
 	if *input != "" {
 		file, err := os.Open(*input)
 		if err != nil {
-			// Error and exit
+			usageAndExit(fmt.Sprintf("Error to open file input: %s.", *input))
 		}
 		defer file.Close()
 		reader = bufio.NewReader(file)
 	} else {
-		reader = bufio.NewReader(os.Stdin)
+		if stat, err := os.Stdin.Stat(); err == nil && stat.Size() > 0 {
+			reader = bufio.NewReader(os.Stdin)
+		} else {
+			usageAndExit("")
+		}
 	}
 	var data string
 	for {
@@ -51,21 +56,41 @@ func main() {
 			if err == io.EOF {
 				break
 			}
-			// Error and exit
+			usageAndExit("Failed to reading input.")
 		}
 		data += line
 	}
-	// Write output
+	// Writer
 	var file *os.File
 	var err error
 	if *output != "" {
 		file, err = os.Create(*output)
 		if err != nil {
-			// Error and exit
+			usageAndExit("Error to create the wanted output file.")
 		}
 	} else {
 		file = os.Stdout
 	}
-	file.WriteString(data)
-	fmt.Println(*input, *output, *smarty, *fractions)
+	// Mark rendering
+	opts := mark.DefaultOptions()
+	opts.Smartypants = *smarty
+	opts.Fractions = *fractions
+	m := mark.New(data, opts)
+	if _, err := file.WriteString(m.Render()); err != nil {
+		filename := *output
+		if filename == "" {
+			filename = "STDOUT"
+		}
+		usageAndExit(fmt.Sprintf("Error writing output to: %s.", filename))
+	}
+}
+
+func usageAndExit(msg string) {
+	if msg != "" {
+		fmt.Fprintf(os.Stderr, msg)
+		fmt.Fprintf(os.Stderr, "\n\n")
+	}
+	flag.Usage()
+	fmt.Fprintf(os.Stderr, "\n")
+	os.Exit(1)
 }
