@@ -1,3 +1,5 @@
+// Mark command line tool
+// Available at http://github.com/a8m/mark
 package main
 
 import (
@@ -16,7 +18,7 @@ var (
 	fractions = flag.Bool("fractions", false, "")
 )
 
-var usage = `Usage: mark-tool [options...] <input>
+var usage = `Usage: mark-cli [options...] <input>
 
 Options:
   -i  Specify file input, otherwise use last argument as input file. 
@@ -49,6 +51,7 @@ func main() {
 			usageAndExit("")
 		}
 	}
+	// Collect data
 	var data string
 	for {
 		line, err := reader.ReadString('\n')
