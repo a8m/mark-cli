@@ -1,4 +1,4 @@
-Mark cli tool
+[Mark](https://github.com/a8m/mark) command-line tool
 ====
 
 ### Intallation
